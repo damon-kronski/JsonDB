@@ -136,6 +136,16 @@ function getNewId($db){
 	}
 }
 
+function newId(){
+	$db = $this->readDB();
+	if(count($db) >= 1){
+		return end($db)['id'] + 1;
+	}else
+	{
+		return 1;
+	}
+}
+
 }
 
 ?>
