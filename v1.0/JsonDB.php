@@ -17,22 +17,37 @@
 
 class JsonDB{
 
+public $config = array();
+
 function __construct($useCookies = true, $jsonDBPath = "db.json",$cookieName = "JsonDB",$defaultArray = array(array('id' => 1,'name' => 'Test','value' => 'Value'))){
-	GLOBAL $config;
-	$config['defaultArray'] = $defaultArray;
-	$config['useCookies'] = $useCookies;
-	$config['cookieName'] = $cookieName;
-	$config['jsonDBPath'] = $jsonDBPath;
-	
-	if($config['useCookies']){
-		if(!isset($_COOKIE[$cookieName]))
-			$this->writeDB($config['defaultArray']);
-	}
-	else
-		if(!file_exists($config['jsonDBPath']))
-			$this->writeDB($config['defaultArray']);
 	
 }
+
+    public static function withJson( $defaultArray = array(array('id' => 1,'name' => 'Test','value' => 'Value')), $jsonDBPath = "db.json" ) {
+    	$instance = new self();
+    	$instance->config['jsonDBPath'] = $jsonDBPath;
+    	$instance->config['defaultArray'] = $defaultArray;
+		$instance->config['useCookies'] = false;
+		$instance->config['cookieName'] = '';
+		
+		if(!file_exists($instance->config['jsonDBPath']))
+			$instance->writeDB($instance->config['defaultArray']);
+		
+		return $instance;
+    }
+
+    public static function withCookie( $defaultArray = array(array('id' => 1,'name' => 'Test','value' => 'Value')), $cookieName = "JsonDB" ) {
+    	$instance = new self();
+    	$instance->config['jsonDBPath'] = '';
+    	$instance->config['defaultArray'] = $defaultArray;
+		$instance->config['useCookies'] = true;
+		$instance->config['cookieName'] = $cookieName;
+		
+		if(!isset($_COOKIE[$cookieName]))
+			$instance->writeDB($instance->config['defaultArray']);
+		
+		return $instance;
+    }
 
 /***************************************************/
 /********************* Script **********************/
@@ -59,23 +74,21 @@ function setItem($id,$value){
 }
 
 function writeDB($array){
-	global $config;
-	if($config['useCookies'])
-		setcookie($config['cookieName'],json_encode($array));
+	if($this->config['useCookies'])
+		setcookie($this->config['cookieName'],json_encode($array));
 	else{
-		$fh = fopen($config['jsonDBPath'], 'w+');
+		$fh = fopen($this->config['jsonDBPath'], 'w+');
 		fwrite($fh, json_encode($array));
 		fclose($fh);
 	}
 }
 
 function readDB(){
-	global $config;
-	if($config['useCookies'])
-		return json_decode($_COOKIE[$config['cookieName']], true);
+	if($this->config['useCookies'])
+		return json_decode($_COOKIE[$this->config['cookieName']], true);
 	else{
-		$fh = fopen($config['jsonDBPath'], 'r');
-		$json = fread($fh, filesize($config['jsonDBPath']));
+		$fh = fopen($this->config['jsonDBPath'], 'r');
+		$json = fread($fh, filesize($this->config['jsonDBPath']));
 		fclose($fh);
 		return json_decode($json, true);
 	}
